@@ -23,7 +23,11 @@ public class ClientHandler implements Runnable {
             this.dos = new DataOutputStream(socket.getOutputStream());
             joinMessage = dis.readUTF();
             clientUsername = joinMessage.replace(Server.JOIN, "");
+            System.out.println("Username:" + clientUsername);
             clientUsername = clientUsername.replace(Server.TERM, "");
+            if(checkName(clientUsername)) {
+            	return;
+            }
             clientHandlers.add(this);
             
             for (ClientHandler clientHandler : clientHandlers) {
@@ -47,17 +51,31 @@ public class ClientHandler implements Runnable {
         	try {
                 msgFromClient = dis.readUTF();
                 
-                String cmd = msgFromClient.substring(0, Server.CMDLEN);
-                String msg = msgFromClient.replace(cmd, "");
+                String imgCmd = msgFromClient.substring(0, Server.CMDLEN - 1);
                 
-                switch(cmd) {
-                	case Server.MSG:
-                		msgFromClient = msgFromClient.replace(msg, clientUsername + ": " + msg);
-                		broadcastMessage(msgFromClient);
-                		break;
-                	case Server.LEAVE:
-                		removeClientHandler();
+                if(imgCmd.equals(Server.IMAGE)) {
+                	int length = dis.readInt();
+            		byte[] imageBytes = dis.readNBytes(length);
+            		broadcastMessage(Server.IMGNM + clientUsername + Server.TERM);
+            		broadcastMessage(Server.IMAGE);
+            		broadcastLength(length);
+            		broadcastBytes(imageBytes);
                 }
+                else
+                {
+                	String cmd = msgFromClient.substring(0, Server.CMDLEN);
+                    String msg = msgFromClient.replace(cmd, "");
+                	
+                	switch(cmd) {
+	                	case Server.MSG:
+	                		msgFromClient = Server.MSG + clientUsername + msg + Server.TERM;
+	                		broadcastMessage(msgFromClient);
+	                		break;
+	                	case Server.LEAVE:
+	                		removeClientHandler();
+                	}
+                }
+                
             } catch (IOException e) {
                 closeEverything(socket, dis, dos);
             }
@@ -74,6 +92,43 @@ public class ClientHandler implements Runnable {
                 closeEverything(socket, dis, dos);
             }
         }
+    }
+    
+    public void broadcastLength(int length) {
+    	for (ClientHandler clientHandler : clientHandlers) {
+            try {
+                if (!clientHandler.clientUsername.equals(clientUsername)) {
+                    clientHandler.dos.writeInt(length);
+                }
+            } catch (IOException e) {
+                closeEverything(socket, dis, dos);
+            }
+        }
+    }
+    
+    public void broadcastBytes(byte[] arr) {
+    	for (ClientHandler clientHandler : clientHandlers) {
+            try {
+                if (!clientHandler.clientUsername.equals(clientUsername)) {
+                	for(int i = 0; i < arr.length; i++) {
+                		dos.writeByte(arr[i]);
+                	}
+                }
+            } catch (IOException e) {
+                closeEverything(socket, dis, dos);
+            }
+        }
+    }
+    
+    public boolean checkName(String username) throws IOException {
+    	for (ClientHandler clientHandler : clientHandlers) {
+        	if(username.equals(clientHandler.clientUsername)) {
+        		dos.writeUTF(Server.BDNME);
+        		closeEverything(socket, dis, dos);
+        		return true;
+        	}
+        }
+		return false;
     }
 
     public void removeClientHandler() {

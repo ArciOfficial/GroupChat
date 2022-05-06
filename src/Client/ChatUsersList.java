@@ -3,32 +3,36 @@ package Client;
 import java.util.StringTokenizer;
 
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JList;
 
 @SuppressWarnings({ "serial", "rawtypes" })
 public class ChatUsersList extends JList{
 	
-	DefaultListModel<String> listModel;
+	DefaultListModel<User> listModel;
+	UsersListRenderer renderer;
 	
 	@SuppressWarnings("unchecked")
 	public ChatUsersList(Client client) {
-		listModel = new DefaultListModel<>();
+		listModel = new DefaultListModel();
+		renderer = new UsersListRenderer();
 		this.setModel(listModel);
+		this.setCellRenderer(renderer);
 	}
 	
-	public void addUser(String user) {
-		listModel.addElement(user);
+	public void addUser(String username, ImageIcon imageIcon) {
+		listModel.addElement(new User(username, imageIcon));
 	}
 	
-	public void removeUser(String user) {
-		listModel.removeElement(user);
+	public void removeUser(String username) {
+		listModel.removeElement(username);
 	}
 	
-	public void addGroupUsers(String users) {
+	public void addGroupUsers(String users, ImageIcon imageIcon) {
 		StringTokenizer st = new StringTokenizer(users);
 		
 		while(st.hasMoreTokens()) {
-			listModel.addElement(st.nextToken());
+			listModel.addElement(new User(st.nextToken(), imageIcon));
 		}
 	}
 	

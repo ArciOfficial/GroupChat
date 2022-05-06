@@ -1,32 +1,49 @@
 package Client;
 
 import java.awt.BorderLayout;
+
 import java.awt.FlowLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-//import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Iterator;
 
 public class ChatGUI implements ActionListener
 {
 	static final String EXIT = "exit";
-	static final String PRIVATE = "private";
+	static final String IMAGE = "image";
 	Client sender;
 	ChatUsersList users;
 	ChatPanel chatPanel;
+	ImageIcon defaultIcon;
 	
 	JFrame mainChat;
 	String userName;
 
-	public ChatGUI( Client sender ) 
+	public ChatGUI( Client sender ) throws IOException 
 	{
 	
 		this.sender = sender;
 		
+		defaultIcon = new ImageIcon(ImageIO.read(User.class.getResourceAsStream( "user_icon.png" ) ));
 		JFrame chatWindow = new JFrame();
 		JPanel chatMainPanel = new JPanel( new BorderLayout() );
 		chatWindow.add( chatMainPanel );
@@ -38,15 +55,14 @@ public class ChatGUI implements ActionListener
 		centerPanel.add( chatPanel );
 		
 		JPanel buttons = new JPanel();
-		JButton privateButton = new JButton( "Private Message" );
-		buttons.add( privateButton );
-		privateButton.setActionCommand( PRIVATE );
-		privateButton.addActionListener(this);
+		JButton imageButton = new JButton( "Change Image" );
+		buttons.add( imageButton );
+		imageButton.setActionCommand( IMAGE );
+		imageButton.addActionListener(this);
 		JButton exitButton = new JButton( "Exit" );
 		buttons.add( exitButton );
 		exitButton.setActionCommand( EXIT );
 		exitButton.addActionListener(this);
-		
 		
 		chatMainPanel.add( centerPanel, BorderLayout.CENTER );
 		chatMainPanel.add( buttons, BorderLayout.SOUTH );
@@ -58,6 +74,7 @@ public class ChatGUI implements ActionListener
 				JOptionPane.QUESTION_MESSAGE );
 		sender.sendMessage( Client.JOIN + userName + Client.TERM);
 		sender.setUsername(userName);
+		users.addUser(userName, getDefaultIcon());
 		
 		chatWindow.setVisible( true );
 		
@@ -67,23 +84,73 @@ public class ChatGUI implements ActionListener
 	{
 		if ( EXIT.equals(e.getActionCommand() ) )
 		{
-			// Tell the server you are leaving
-			sender.sendMessage(Client.LEAVE + Client.TERM);
+			sender.sendMessage(Client.LEAVE);
+			sender.closeEverything();
 			System.exit(0);
 		}
-		/* else if ( PRIVATE.equals(e.getActionCommand() ) )
+		 else if ( IMAGE.equals(e.getActionCommand() ) )
 		{
-			// Find out which user is selected
-			String name = users.getSelectedUser();
+			 JFileChooser fileChooser = new JFileChooser();
+			 FileNameExtensionFilter filter = new FileNameExtensionFilter(".png", "png");
+			 fileChooser.setFileFilter(filter);
+			 
+			 int retVal = fileChooser.showOpenDialog(fileChooser);
+			 
+			 if(retVal == JFileChooser.APPROVE_OPTION){
+				 
+				 File img = fileChooser.getSelectedFile();
+				 long imgSize = img.length();
+				 String aux = "";
+				 String imgStr = "";
+				 
+				 if(img != null) {
+					 try {
+						 FileReader fileReader = new FileReader(img);
+					     BufferedReader bufferedReader = new BufferedReader(fileReader);
+					     
+					     byte[] arr = Files.readAllBytes(img.toPath());
+					     
+					     bufferedReader.close();
+					 	 sender.sendImage(arr);
+					 	 addImage(sender.getUsername(), arr);
+					 } catch(Exception ex) {
+						 System.out.println("Error");
+					 }
+
+				 }
+			 }
+			 
+			 
+		}
 			
-			// Launch a private message dialog window for this user
-			if ( name != null )
-			{
-				users.messageUser( name );
+	}
+	
+
+	public void addImage(String username, byte[] arr) 
+	{
+		
+		ImageIcon imageIcon = new ImageIcon(arr);
+//		Image image = imageIcon.getImage();
+//		Image newimg = image.getScaledInstance(24, 24, java.awt.Image.SCALE_SMOOTH);
+//		imageIcon = new ImageIcon(newimg);
+		
+		int[] selectedIx = users.getSelectedIndices();
+		
+		for(int i = 0; i < selectedIx.length; i++) {
+			User u = users.listModel.getElementAt(selectedIx[i]);
+			
+			if(u.username == username) {
+				u.imageIcon = imageIcon;
+				break;
 			}
-			// error message is no one is selected or control button usuability
-		} */
-			
+		}
+		
+		
+	}
+	
+	public ImageIcon getDefaultIcon() throws IOException 
+	{
+		return defaultIcon;
 	}
 	
 	public ChatUsersList getUsersList()

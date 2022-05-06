@@ -71,17 +71,9 @@ public class ChatPanel extends JPanel implements ActionListener
 		if ( partnerName == null )
 		{
 			// This is a message for all - no private partner
-			sender.sendMessage( Client.MSG + msg + Client.TERM );
+			sender.sendMessage( Client.MSG + " " + msg + Client.TERM );
 			showMessage(msg + Client.TERM);
 			msgBox.setText( "" );
-		}
-		else
-		{
-			// This is a private message
-			sender.sendMessage( "WHISPER " + partnerName + " " + msg + Client.TERM );
-			msgBox.setText( "" );
-			// show my own message, because I won't get it sent to me like in the group chat
-			chatArea.append( msg + Client.TERM );
 		}
 			
 	}

@@ -11,7 +11,9 @@ public class Server {
     public static final String LEAVE = "LEAVE ";
     public static final String MSG = "MESSG ";
     public static final String GROUP = "GROUP ";
-    public static final String IMAGE = "IMAGE ";
+    public static final String IMAGE = "IMAGE";
+    public static final String IMGNM = "IMGNM ";
+    public static final String BDNME = "BDNME ";
     public static final int CMDLEN = 6;
     public static final int BUFSIZE = 1024;
 	
@@ -46,7 +48,7 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(1111);
+        ServerSocket serverSocket = new ServerSocket(1131);
         Server server = new Server(serverSocket);
         server.startServer();
     }
